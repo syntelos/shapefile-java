@@ -17,7 +17,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.GregorianCalendar;
 import java.util.List;
 
 /**
@@ -45,42 +44,42 @@ public class DBFRead
                             {
                                 IntWritable ovalue = (IntWritable)actual;
                                 int value = ovalue.get();
-                                System.out.printf("name '%s', type 'SHORT', value '%d'%n",meta.fieldName,value);
+                                System.out.printf("%s='%d' ",meta.fieldName,value);
                             }
                             break;
                         case Long:
                             {
                                 LongWritable ovalue = (LongWritable)actual;
                                 long value = ovalue.get();
-                                System.out.printf("name '%s', type 'LONG', value '%d'%n",meta.fieldName,value);
+                                System.out.printf("%s='%d' ",meta.fieldName,value);
                             }
                             break;
                         case Float:
                             {
                                 FloatWritable ovalue = (FloatWritable)actual;
                                 float value = ovalue.get();
-                                System.out.printf("name '%s', type 'FLOAT', value '%f'%n",meta.fieldName,value);
+                                System.out.printf("%s='%f' ",meta.fieldName,value);
                             }
                             break;
                         case Double:
                             {
                                 DoubleWritable ovalue = (DoubleWritable)actual;
                                 double value = ovalue.get();
-                                System.out.printf("name '%s', type 'DOUBLE', value '%f'%n",meta.fieldName,value);
+                                System.out.printf("%s='%f' ",meta.fieldName,value);
                             }
                             break;
                         case String:
                             {
                                 Text ovalue = (Text)actual;
                                 String value = ovalue.toString().trim();
-                                System.out.printf("name '%s', type 'STRING', value '%s'%n",meta.fieldName,value);
+                                System.out.printf("%s='%s' ",meta.fieldName,value);
                             }
                             break;
                         case Date:
                             {
                                 LongWritable ovalue = (LongWritable)actual;
                                 long value = ovalue.get();
-                                System.out.printf("name '%s', type 'DATE', value '%d'%n",meta.fieldName,value);
+                                System.out.printf("%s='%d' ",meta.fieldName,value);
                             }
                             break;
                         default:
@@ -89,11 +88,14 @@ public class DBFRead
                         }
                     }
 
-                    break;//
+                    System.out.println();
                 }
             }
-            catch (IOException exc){
-                System.err.println("usage: model.DBFRead <file.dbf>");
+            catch (java.io.EOFException exc){
+                return;
+            }
+            catch (Exception exc){
+                exc.printStackTrace();
                 System.exit(1);
             }
             finally {
