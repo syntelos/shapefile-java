@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="shapefile" default="update">
+
+  <tstamp/>
+
+  <property name="src" location="${basedir}/src"/>
+  <property name="tgt" location="${basedir}/tgt"/>
+  <property name="dst" location="${basedir}"/>
+  <property name="lib" location="${basedir}/lib"/>
+  <property name="ant" location="${basedir}/ant"/>
+  <property name="test.src" value="test/src"/>
+  <property name="test.bin" value="test/bin"/>
+  <property name="build.version" location="${basedir}/build.version"/>
+
+  <property name="compiler.source" value="1.6"/>
+  <property name="compiler.target" value="1.6"/>
+  <property name="compiler.optimize" value="false"/>
+  <property name="compiler.debug" value="true"/>
+  <property name="compiler.deprecation" value="false"/>
+  <property name="compiler.encoding" value="utf-8"/>
+
+  <import file="${ant}/build.in.update.xml"/>
+  <import file="${ant}/build.in.version.xml"/>
+
+  <property file="${user.home}/update.properties"/>
+
+  <path id="lib.path">
+    <fileset dir="${lib}">
+      <include name="**/*.jar" />
+    </fileset>
+  </path>
+
+  <target name="update" depends="jar" if="shapefile.update">
+
+    <do-update src="${target.jar}" tgt="${shapefile.update}"/>
+  </target>
+
+  <target name="jar" depends="compile" description="Create JAR. Dep 'compile'.">
+    <delete>
+      <fileset dir="${basedir}" includes="shapefile-*.jar" />
+    </delete>
+
+    <jar jarfile="${target.jar}" >
+      <manifest>
+        <attribute name="Main-Class" value="Apply"/>
+        <attribute name="Class-Path" value="${lib.path.manifest}"/>
+      </manifest>
+      <fileset dir="${tgt}" includes="**/*.class" />
+      <fileset dir="${src}" includes="**/*.properties"/>
+      <fileset dir="${src}" includes="**/*.txt"/>
+      <fileset dir="${src}" includes="**/*.xml"/>
+    </jar>
+    <delete dir="${tgt}"/>
+  </target>
+
+  <target name="compile" depends="version">
+    <mkdir dir="${tgt}"/>
+
+    <java outputproperty="lib.path.manifest" classpath="${ant}" classname="LibPathManifest" failonerror="true">
+
+      <arg value="${toString:lib.path}"/>
+    </java>
+
+    <javac srcdir="${src}" destdir="${tgt}" debug="${compiler.debug}" encoding="${compiler.encoding}"
+           classpathref="lib.path" source="${compiler.source}" target="${compiler.target}">
+    </javac>
+  </target>
+
+  <target name="clean" description="Clean up project.">
+    <delete dir="${tgt}"/>
+  </target>
+
+  <target name="version" description="Report current project version.">
+    <version/>
+    <property name="target.jar" value="${dst}/${ant.project.name}-${this.version}.jar"/>
+  </target>
+
+  <target name="build" description="Increment project version build number.">
+    <version-build/>
+    <version/>
+  </target>
+  <target name="minor" description="Increment project version minor number.">
+    <version-minor/>
+    <version/>
+  </target>
+  <target name="major" description="Increment project version major number.">
+    <version-major/>
+    <version/>
+  </target>
+
+  <target name="test" depends="jar-test" description="Package and run tests.">
+
+    <antcall target="test-apply"/>
+
+  </target>
+
+  <target name="test-apply" depends="jar-test" description="Package and run tests.">
+
+    <java classname="Apply" fork="true" failOnError="true">
+      <jvmarg value="-Dpath.Parser.Debug=true"/>
+      <classpath>
+        <pathelement location="${target.test.jar}" />
+        <pathelement location="${target.jar}" />
+        <path refid="lib.path" />
+      </classpath>
+    </java>
+
+  </target>
+
+  <target name="jar-test" depends="compile-test" description="Package bin to target jar, clean bin.">
+
+    <delete file="${target.test.jar}"/>
+    <jar jarfile="${target.test.jar}" basedir="${test.bin}" >
+      <manifest>
+        <attribute name="Main-Class" value="Apply"/>
+        <attribute name="Class-Path" value="${lib.path.manifest}"/>
+      </manifest>
+      <fileset dir="${test.tgt}" includes="**/*.class" />
+      <fileset dir="${test.src}" includes="**/*.properties"/>
+      <fileset dir="${test.src}" includes="**/*.txt"/>
+      <fileset dir="${test.src}" includes="**/*.xml"/>
+    </jar>
+    <delete dir="${test.bin}"/>
+  </target>
+
+  <target name="compile-test" depends="version" description="Compile src to bin">
+
+    <property name="target.test.jar" value="${dst}/${ant.project.name}-test-${this.version}.jar"/>
+
+    <java outputproperty="lib.path.manifest" classpath="${ant}" classname="LibPathManifest" failonerror="true">
+      <arg value="${target.jar}"/>
+      <arg value="${toString:lib.path}"/>
+    </java>
+    <echo/>
+    <echo message="Package-Jar-Test: ${target.test.jar}"/>
+    <echo message="Package-Jar-Test-Class-Path: ${lib.path.manifest}"/>
+
+    <echo/>
+
+    <delete dir="${test.bin}"/>
+    <mkdir dir="${test.bin}"/>
+
+    <javac srcdir="${test.src}" destdir="${test.bin}" debug="${compiler.debug}" encoding="${compiler.encoding}"
+           source="${compiler.source}" target="${compiler.target}">
+      <classpath>
+        <path location="${target.jar}"/>
+        <path refid="lib.path"/>
+      </classpath>
+    </javac>
+  </target>
+
+</project>
