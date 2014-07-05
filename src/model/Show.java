@@ -7,7 +7,9 @@ import com.esri.dbf.DBFType;
 
 import com.esri.core.geometry.Envelope2D;
 import com.esri.core.geometry.Point;
+import com.esri.core.geometry.Polyline;
 import com.esri.core.geometry.Polygon;
+import com.esri.core.geometry.MultiPoint;
 import com.esri.shp.ShpHeader;
 import com.esri.shp.ShpReader;
 import com.esri.shp.ShpType;
@@ -28,7 +30,7 @@ import java.util.List;
 
 /**
  */
-public class Read
+public class Show
 {
 
     public static void main(String[] argv){
@@ -48,7 +50,9 @@ public class Read
                 final ShpHeader header = shpReader.getHeader();
                 final ShpType shape = ShpType.For(header);
                 final Point point = new Point();
+                final Polyline polyLine = new Polyline();
                 final Polygon polygon = new Polygon();
+                final MultiPoint multiPoint = new MultiPoint();
 
                 while (DBFType.END != dbfReader.nextDataType()){
                     int field = 0;
@@ -103,19 +107,29 @@ public class Read
                         }
                     }
 
-                    System.out.println();
-
                     switch(shape){
                     case Point:
                         {
                             shpReader.queryPoint(point);
-                            System.out.print(point.toString());
+                            System.out.println("Point");
+                        }
+                        break;
+                    case PolyLine:
+                        {
+                            shpReader.queryPolyline(polyLine);
+                            System.out.printf("PolyLine[%d]%n",polyLine.getSegmentCount());
                         }
                         break;
                     case Polygon:
                         {
                             shpReader.queryPolygon(polygon);
-                            System.out.print(polygon.toString());
+                            System.out.printf("Polygon[%d]%n",polygon.getSegmentCount());
+                        }
+                        break;
+                    case MultiPoint:
+                        {
+                            shpReader.queryMultiPoint(multiPoint);
+                            System.out.printf("MultiPoint[%d]%n",multiPoint.getPointCount());
                         }
                         break;
                     default:

@@ -42,7 +42,7 @@
 
     <jar jarfile="${target.jar}" >
       <manifest>
-        <attribute name="Main-Class" value="model.Read"/>
+        <attribute name="Main-Class" value="model.Show"/>
         <attribute name="Class-Path" value="${lib.path.manifest}"/>
       </manifest>
       <fileset dir="${tgt}" includes="**/*.class" />

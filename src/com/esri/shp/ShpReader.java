@@ -2,6 +2,8 @@ package com.esri.shp;
 
 import com.esri.core.geometry.Point;
 import com.esri.core.geometry.Polygon;
+import com.esri.core.geometry.Polyline;
+import com.esri.core.geometry.MultiPoint;
 import org.apache.commons.io.EndianUtils;
 
 import java.io.DataInputStream;
@@ -55,19 +57,33 @@ public class ShpReader
 
     public Point readPoint() throws IOException
     {
-        return queryPoint(new Point());
+        if (ShpType.Null.value != this.shapeType){
+
+            return queryPoint(new Point());
+        }
+        else {
+            return null;
+        }
     }
 
     public Polygon readPolygon() throws IOException
     {
-        return queryPolygon(new Polygon());
+        if (ShpType.Null.value != this.shapeType){
+
+            return queryPolygon(new Polygon());
+        }
+        else {
+            return null;
+        }
     }
 
     public Point queryPoint(final Point point) throws IOException
     {
         readRecordHeader();
-        point.setX(EndianUtils.readSwappedDouble(m_dataInputStream));
-        point.setY(EndianUtils.readSwappedDouble(m_dataInputStream));
+        if (ShpType.Null.value != this.shapeType){
+            point.setX(EndianUtils.readSwappedDouble(m_dataInputStream));
+            point.setY(EndianUtils.readSwappedDouble(m_dataInputStream));
+        }
         return point;
     }
 
@@ -76,47 +92,118 @@ public class ShpReader
         polygon.setEmpty();
 
         readRecordHeader();
+        if (ShpType.Null.value != this.shapeType){
+            xmin = EndianUtils.readSwappedDouble(m_dataInputStream);
+            ymin = EndianUtils.readSwappedDouble(m_dataInputStream);
+            xmax = EndianUtils.readSwappedDouble(m_dataInputStream);
+            ymax = EndianUtils.readSwappedDouble(m_dataInputStream);
 
-        // TODO - read 'contentLengthInBytes' !!
+            numParts = EndianUtils.readSwappedInteger(m_dataInputStream);
+            numPoints = EndianUtils.readSwappedInteger(m_dataInputStream);
 
-        xmin = EndianUtils.readSwappedDouble(m_dataInputStream);
-        ymin = EndianUtils.readSwappedDouble(m_dataInputStream);
-        xmax = EndianUtils.readSwappedDouble(m_dataInputStream);
-        ymax = EndianUtils.readSwappedDouble(m_dataInputStream);
+            if ((numParts + 1) > m_parts.length){
+                m_parts = new int[numParts + 1];
+            }
+            for (int p = 0; p < numParts; p++){
+                m_parts[p] = EndianUtils.readSwappedInteger(m_dataInputStream);
+            }
+            m_parts[numParts] = numPoints;
 
-        numParts = EndianUtils.readSwappedInteger(m_dataInputStream);
-        numPoints = EndianUtils.readSwappedInteger(m_dataInputStream);
-
-        if ((numParts + 1) > m_parts.length)
-        {
-            m_parts = new int[numParts + 1];
-        }
-        for (int p = 0; p < numParts; p++)
-        {
-            m_parts[p] = EndianUtils.readSwappedInteger(m_dataInputStream);
-        }
-        m_parts[numParts] = numPoints;
-
-        for (int i = 0, j = 1; i < numParts; )
-        {
-            final int count = m_parts[j++] - m_parts[i++];
-            for (int c = 0; c < count; c++)
-            {
-                final double x = EndianUtils.readSwappedDouble(m_dataInputStream);
-                final double y = EndianUtils.readSwappedDouble(m_dataInputStream);
-                if (c > 0)
-                {
-                    polygon.lineTo(x, y);
+            for (int i = 0, j = 1; i < numParts; ){
+                final int count = m_parts[j++] - m_parts[i++];
+                for (int c = 0; c < count; c++){
+                    final double x = EndianUtils.readSwappedDouble(m_dataInputStream);
+                    final double y = EndianUtils.readSwappedDouble(m_dataInputStream);
+                    if (0 == c){
+                        polygon.startPath(x, y);
+                    }
+                    else {
+                        polygon.lineTo(x, y);
+                    }
                 }
-                else
-                {
-                    polygon.startPath(x, y);
+            }
+            polygon.closeAllPaths();
+        }
+        return polygon;
+    }
+
+    public Polyline queryPolyline(final Polyline polyline) throws IOException
+    {
+        polyline.setEmpty();
+
+        readRecordHeader();
+        if (ShpType.Null.value != this.shapeType){
+            xmin = EndianUtils.readSwappedDouble(m_dataInputStream);
+            ymin = EndianUtils.readSwappedDouble(m_dataInputStream);
+            xmax = EndianUtils.readSwappedDouble(m_dataInputStream);
+            ymax = EndianUtils.readSwappedDouble(m_dataInputStream);
+
+            numParts = EndianUtils.readSwappedInteger(m_dataInputStream);
+            numPoints = EndianUtils.readSwappedInteger(m_dataInputStream);
+
+            if ((numParts + 1) > m_parts.length){
+                m_parts = new int[numParts + 1];
+            }
+            for (int p = 0; p < numParts; p++){
+                m_parts[p] = EndianUtils.readSwappedInteger(m_dataInputStream);
+            }
+            m_parts[numParts] = numPoints;
+
+            for (int i = 0, j = 1; i < numParts; ){
+                final int count = m_parts[j++] - m_parts[i++];
+
+                double lx = 0.0, ly = 0.0;
+
+                for (int c = 0; c < count; c++){
+                    final double x = EndianUtils.readSwappedDouble(m_dataInputStream);
+                    final double y = EndianUtils.readSwappedDouble(m_dataInputStream);
+                    if (0 == c){
+                        lx = x;
+                        ly = y;
+                        polyline.startPath(x, y);
+                    }
+                    else if (x != lx && y != ly){
+                        polyline.lineTo(x, y);
+                    }
                 }
             }
         }
-        polygon.closeAllPaths();
+        return polyline;
+    }
 
-        return polygon;
+    public MultiPoint queryMultiPoint(final MultiPoint multiPoint) throws IOException
+    {
+        multiPoint.setEmpty();
+
+        readRecordHeader();
+        if (ShpType.Null.value != this.shapeType){
+            xmin = EndianUtils.readSwappedDouble(m_dataInputStream);
+            ymin = EndianUtils.readSwappedDouble(m_dataInputStream);
+            xmax = EndianUtils.readSwappedDouble(m_dataInputStream);
+            ymax = EndianUtils.readSwappedDouble(m_dataInputStream);
+
+            numParts = EndianUtils.readSwappedInteger(m_dataInputStream);
+            numPoints = EndianUtils.readSwappedInteger(m_dataInputStream);
+
+            if ((numParts + 1) > m_parts.length){
+                m_parts = new int[numParts + 1];
+            }
+            for (int p = 0; p < numParts; p++){
+                m_parts[p] = EndianUtils.readSwappedInteger(m_dataInputStream);
+            }
+            m_parts[numParts] = numPoints;
+
+            for (int i = 0, j = 1; i < numParts; ){
+                final int count = m_parts[j++] - m_parts[i++];
+                for (int c = 0; c < count; c++){
+                    final double x = EndianUtils.readSwappedDouble(m_dataInputStream);
+                    final double y = EndianUtils.readSwappedDouble(m_dataInputStream);
+
+                    multiPoint.add(x, y);
+                }
+            }
+        }
+        return multiPoint;
     }
 
 }

@@ -1,23 +1,25 @@
 package com.esri.shp;
 
+import com.esri.core.geometry.Geometry;
+
 /**
  * 
  */
 public enum ShpType {
-    Null(0),
-    Point(1),
-    PolyLine(3),
-    Polygon(5),
-    MultiPoint(8),
-    PointZ(11),
-    PolyLineZ(13),
-    PolygonZ(15),
-    MultiPointZ(18),
-    PointM(21),
-    PolyLineM(23),
-    PolygonM(25),
-    MultiPointM(28),
-    MultiPatch(31);
+    Null        ( 0, Geometry.Type.Unknown),
+    Point       ( 1, Geometry.Type.Point),
+    PolyLine    ( 3, Geometry.Type.Polyline),
+    Polygon     ( 5, Geometry.Type.Polygon),
+    MultiPoint  ( 8, Geometry.Type.MultiPoint),
+    PointZ      (11, Geometry.Type.Point),
+    PolyLineZ   (13, Geometry.Type.Polyline),
+    PolygonZ    (15, Geometry.Type.Polygon),
+    MultiPointZ (18, Geometry.Type.MultiPoint),
+    PointM      (21, Geometry.Type.Point),
+    PolyLineM   (23, Geometry.Type.Polyline),
+    PolygonM    (25, Geometry.Type.Polygon),
+    MultiPointM (28, Geometry.Type.MultiPoint),
+    MultiPatch  (31, Geometry.Type.Unknown);
 
 
     public final static ShpType For(ShpHeader header){
@@ -58,9 +60,14 @@ public enum ShpType {
         }
     }
 
+
     public final int value;
 
-    private ShpType(int value){
+    public final Geometry.Type geometry;
+
+
+    private ShpType(int value, Geometry.Type geometry){
         this.value = value;
+        this.geometry = geometry;
     }
 }
